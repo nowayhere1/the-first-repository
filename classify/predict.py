@@ -37,6 +37,133 @@ import re
 import torch
 import torch.nn.functional as F
 import name_change as nc
+import websockets
+import asyncio
+import base64
+import socket
+import json
+
+# def send_image(client_socket, image_path, text_name,text_prob,text_jdown):   #发送图片
+    # with open(image_path, 'rb') as file:
+    #     # print(image_path)
+    #     image_data = file.read()
+    #     # # print(image_data)
+    #     #         # 将图片数据转成Base64编码
+    #     # base64_data = base64.b64encode(image_data)
+    #     # client_socket.sendall(base64_data)
+    #     # print(base64_data)
+    #     # client_socket.sendall(image_data)
+    #     base64_data = base64.b64encode(image_data)
+    #     data = {
+    #         "image": base64_data.decode('utf-8'),    # 图片
+    #         "text_name": text_name,  # 地面类别
+    #         "text_prob": text_prob,  # 置信度
+    #         "text_level": text_jdown # 调平
+    #     }
+    #     json_data = json.dumps(data)
+    #     # print(json_data)
+    #     client_socket.sendall(json_data.encode('utf-8'))
+
+async def send_image(websocket, path):
+    print(path)
+    await websocket.send("Processing images........")
+    image_path,text_names,text_jdown,text_prob = run(**vars(opt))    # 图片路径
+    await websocket.send("Images processing completed!")
+    check_requirements(ROOT / 'requirements.txt', exclude=('tensorboard', 'thop'))
+    img_leng = len(image_path)
+    print(img_leng)
+    i = 0
+    # while True:
+    #     # client_socket, client_address = server_socket.accept()
+    #     # print('Accepted connection from', client_address)
+    #     # cli_data = client_socket.recv(1024)
+    #     # print("clidata",cli_data)
+    #     cli_data = await websocket.recv()
+    #     print(f"< {cli_data}")
+    #     if not cli_data:
+    #         break
+    #     # elif cli_data == '1':
+    #     # else:
+    #     elif cli_data == "1":
+    #     # image_path = '/home/ming/beili_websoket/test.png'  # 替换为你要传输的图片的路径
+    #         # send_image(client_socket, img_path[i],text_names[i],text_prob[i],text_jdown[i])
+    #         # send_text(i,text_names[i],text_prob[i],text_jdown[i])
+    #         # print(i)
+    #         with open(image_path[i], 'rb') as file:
+    #         # print(image_path)
+    #             image_data = file.read()
+    #         # # print(image_data)
+    #         #         # 将图片数据转成Base64编码
+    #         # base64_data = base64.b64encode(image_data)
+    #         # client_socket.sendall(base64_data)
+    #         # print(base64_data)
+    #         # client_socket.sendall(image_data)
+    #             base64_data = base64.b64encode(image_data)
+    #             data = {
+    #                 "image": base64_data.decode('utf-8'),    # 图片
+    #                 "text_name": text_names[i],  # 地面类别
+    #                 "text_prob": text_prob[i],  # 置信度
+    #                 "text_level": text_jdown[i] # 调平
+    #             }
+    #             json_data = json.dumps(data)
+    #             # print(json_data)
+    #             # await websocket.send(json_data.encode('utf-8'))
+    #             await websocket.send(json_data)
+    #             # print(json_data)
+    #             # client_socket.sendall(json_data.encode('utf-8'))
+    #             i = (i + 1) % img_leng
+    #             print("第",i,"张")
+    #             await asyncio.sleep(5)
+    cli_data = await websocket.recv()
+    print(f"< {cli_data}")
+    # if not cli_data:
+    #     break
+    # elif cli_data == '1':
+    # else:
+    if cli_data == "1":
+        while True:
+            # client_socket, client_address = server_socket.accept()
+            # print('Accepted connection from', client_address)
+            # cli_data = client_socket.recv(1024)
+            # print("clidata",cli_data)
+            # cli_data = await websocket.recv()
+            # print(f"< {cli_data}")
+            # if not cli_data:
+            #     break
+            # # elif cli_data == '1':
+            # # else:
+            # elif cli_data == "1":
+            # image_path = '/home/ming/beili_websoket/test.png'  # 替换为你要传输的图片的路径
+                # send_image(client_socket, img_path[i],text_names[i],text_prob[i],text_jdown[i])
+                # send_text(i,text_names[i],text_prob[i],text_jdown[i])
+                # print(i)
+                with open(image_path[i], 'rb') as file:
+                # print(image_path)
+                    image_data = file.read()
+                # # print(image_data)
+                #         # 将图片数据转成Base64编码
+                # base64_data = base64.b64encode(image_data)
+                # client_socket.sendall(base64_data)
+                # print(base64_data)
+                # client_socket.sendall(image_data)
+                    base64_data = base64.b64encode(image_data)
+                    data = {
+                        "image": base64_data.decode('utf-8'),    # 图片
+                        "text_name": text_names[i],  # 地面类别
+                        "text_prob": text_prob[i],  # 置信度
+                        "text_level": text_jdown[i] # 调平
+                    }
+                    json_data = json.dumps(data)
+                    # print(json_data)
+                    # await websocket.send(json_data.encode('utf-8'))
+                    await websocket.send(json_data)
+                    # print(json_data)
+                    # client_socket.sendall(json_data.encode('utf-8'))
+                    i = (i + 1) % img_leng
+                    print("第",i,"张")
+                    await asyncio.sleep(5)
+
+
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[1]  # YOLOv5 root directory
@@ -95,10 +222,7 @@ def run(
     device = select_device(device)
     model = DetectMultiBackend(weights, device=device, dnn=dnn, data=data, fp16=half)
     stride, names, pt = model.stride, model.names, model.pt
-    names = ['不平整沥青路','平整沥青路','平整沥青路','不平整水泥路','平整水泥路','平整水泥路','砾石路','泥地',
-             '雪地','冰面','雪地','不平整沥青路','平整沥青路','平整沥青路','不平整水泥路','平整水泥路','平整水泥路',
-             '砾石路','泥地','不平整沥青路','平整沥青路','平整沥青路','不平整水泥路','平整水泥路','平整水泥路',
-             '砾石路','泥地']
+    
     # for i in range(27):
     #     print(str(i)+names[i]+'/n')
     imgsz = check_img_size(imgsz, s=stride)  # check image size
@@ -125,7 +249,21 @@ def run(
     acc = 0   #准确率
     # for i in range(27):
     #     print(str(i)+names[i]+'/n')
+    names = ['不平整沥青路','平整沥青路','平整沥青路','不平整水泥路','平整水泥路','平整水泥路','砾石路','泥地',
+             '雪地','冰面','雪地','不平整沥青路','平整沥青路','平整沥青路','不平整水泥路','平整水泥路','平整水泥路',
+             '砾石路','泥地','不平整沥青路','平整沥青路','平整沥青路','不平整水泥路','平整水泥路','平整水泥路',
+             '砾石路','泥地']
+    
+#############用于发送图片和识别结果
+    img_path = []   # 存储原始图片的地址
+    text_prob = []  # 存储置信度
+    text_jdown = [] # 存储是否可以调平
+    text_names = [] # 存储地形种类
+
     for path, im, im0s, vid_cap, s in dataset:  #路径、图像、原始图像的numpy、none、图片的宽和高
+        
+        img_path.append(path) #添加原始图片
+        
         acc_num = acc_num + 1 
         with dt[0]:
             im = torch.Tensor(im).to(model.device)
@@ -152,6 +290,8 @@ def run(
 
             p = Path(p)  # to Path
             save_path = str(save_dir / p.name)  # im.jpg
+            # img_path.append(save_path)    #添加图片名
+            
             # txt_path = str(save_dir / 'labels' / p.stem) + ('' if dataset.mode == 'image' else f'_{frame}')  # im.txt
             txt_path = str(save_dir / 'labels' / "1") + ('' if dataset.mode == 'image' else f'_{frame}')  # im.txt
 
@@ -170,6 +310,14 @@ def run(
                 jdown = "适合调平"
             else :
                 jdown = "不适合调平"
+                
+            text_jdown.append(jdown)   #添加jdown
+            text_names.append(names[top5i[0]])  #添加地形种类
+            text_prob.append(round(prob[top5i[0]].item(),2))  #添加置信度
+            print(names[top5i[0]])
+            print(round(prob[top5i[0]].item(),2))
+            print(jdown)
+            # print()
             # print(top5i[0])
             # Write results
             text = '\n'.join(f'{prob[j]:.2f} {names[j]} \n{jdown}' for j in top5i)
@@ -251,12 +399,14 @@ def run(
         # print(acc_num,acc_right)
         # acc = "{:.2f}%".format(acc_right/acc_num*100)
         # print("accuracy is :",acc)
+    return img_path,text_names,text_jdown,text_prob
+
 def parse_opt():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights', nargs='+', type=str, default=ROOT / 'runs/train-cls/exp18/weights/best.pt', help='model path(s)')   #27类
-    # parser.add_argument('--source', type=str, default='D:/jupyter_notebook/yolov5-master/datasets/RSCD dataset-1million/1test', help='file/dir/URL/glob/screen/0(webcam)')
-    # parser.add_argument('--source', type=str, default='0', help='file/dir/URL/glob/screen/0(webcam)')   #for docker
+    parser.add_argument('--weights', nargs='+', type=str, default=ROOT / 'runs/train-cls/exp4/weights/best.pt', help='model path(s)')   #27类
     parser.add_argument('--source', type=str, default=ROOT / 'data/1test', help='file/dir/URL/glob/screen/0(webcam)')
+    # parser.add_argument('--source', type=str, default='0', help='file/dir/URL/glob/screen/0(webcam)')   #for docker
+    # parser.add_argument('--source', type=str, default=ROOT / 'data/1test', help='file/dir/URL/glob/screen/0(webcam)')
     parser.add_argument('--data', type=str, default=ROOT / 'data/coco128.yaml', help='(optional) dataset.yaml path')
     parser.add_argument('--imgsz', '--img', '--img-size', nargs='+', type=int, default=[224], help='inference size h,w')
     parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
@@ -277,11 +427,52 @@ def parse_opt():
     print_args(vars(opt))
     return opt
 
-
 def main(opt):
-    check_requirements(ROOT / 'requirements.txt', exclude=('tensorboard', 'thop'))
-    run(**vars(opt))
+    # img_path,text_names,text_jdown,text_prob = run(**vars(opt))    # 图片路径
+    # check_requirements(ROOT / 'requirements.txt', exclude=('tensorboard', 'thop'))
+    # websoket()
+    # path = 230
+#########################9.8：0：30新添加的websocket部分
+    host = socket.gethostname()
+    print(host)
+    start_server = websockets.serve(send_image, host, 8010)
 
+    asyncio.get_event_loop().run_until_complete(start_server)
+    asyncio.get_event_loop().run_forever()
+########################
+    # server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # server_address = ('localhost', 8001)
+    # # host = socket.gethostname()
+    # # server_address = (host, 8001)
+    # server_socket.bind(server_address)
+    # server_socket.listen(1)
+    # print('Waiting for connections...')
+    # client_socket, client_address = server_socket.accept()
+    # print('Accepted connection from', client_address)
+    # img_leng = len(img_path)
+    # print(img_leng)
+    # i = 0
+    # while True:
+    #     # client_socket, client_address = server_socket.accept()
+    #     # print('Accepted connection from', client_address)
+    #     # cli_data = client_socket.recv(1024)
+    #     # print("clidata",cli_data)
+    #     if not cli_data:
+    #         break
+    #     elif cli_data.decode('utf-8') == "1":
+    #     # image_path = '/home/ming/beili_websoket/test.png'  # 替换为你要传输的图片的路径
+    #         send_image(client_socket, img_path[i],text_names[i],text_prob[i],text_jdown[i])
+    #         # send_text(i,text_names[i],text_prob[i],text_jdown[i])
+    #         # print(i)
+    #         i = (i + 1) % img_leng
+    #         # if i < img_leng:
+    #         #     i = (i + 1) % img_leng
+    #         # else:
+    #         #     break
+    #         client_socket.close()
+
+    # client_socket.close()
+    # run(**vars(opt))
 
 if __name__ == '__main__':
     opt = parse_opt()
